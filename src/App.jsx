@@ -14,14 +14,10 @@ import {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_HEADLINE = 'Ship faster than\never before.'
-const DEFAULT_PARAGRAPH =
-  'The modern workflow for engineering teams. Plan, build, and track work without the overhead — so your team can focus on what matters.'
-const DEFAULT_CTA   = 'Start for free'
-const DEFAULT_BRAND = { name: 'YourBrand', logoSrc: null, fontFamily: null, description: '' }
-
-const ENV_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || ''
-const LS_KEY      = 'anthropic_api_key'
+const DEFAULT_HEADLINE  = 'Ship faster than\never before.'
+const DEFAULT_PARAGRAPH = 'The modern workflow for engineering teams. Plan, build, and track work without the overhead — so your team can focus on what matters.'
+const DEFAULT_CTA       = 'Start for free'
+const DEFAULT_BRAND     = { name: 'YourBrand', logoSrc: null, fontFamily: null, description: '' }
 
 const COLOR_FIELDS = [
   { key: 'background',    label: 'Background' },
@@ -59,7 +55,6 @@ function parseCSV(text) {
 
 function slugify(t) { return (t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) }
 function pad(n) { return String(n).padStart(3, '0') }
-function getApiKey() { return ENV_API_KEY || localStorage.getItem(LS_KEY) || '' }
 
 async function captureCanvas(el) {
   await document.fonts.ready
@@ -73,14 +68,14 @@ async function captureCanvas(el) {
 
 // ── UI primitives ─────────────────────────────────────────────────────────────
 
-function Field({ label, value, onChange, multiline, placeholder }) {
+function Field({ label, value, onChange, multiline, placeholder, type = 'text' }) {
   const s = {
-    value, onChange: e => onChange(e.target.value), placeholder,
+    value, onChange: e => onChange(e.target.value), placeholder, type,
     style: {
       width: '100%', background: '#111113', border: '1px solid #1E1E24',
       borderRadius: 8, color: '#FFF', fontSize: 14, fontFamily: 'Inter, sans-serif',
       padding: '10px 12px', outline: 'none', resize: 'vertical',
-      transition: 'border-color 0.15s', lineHeight: 1.5,
+      transition: 'border-color 0.15s', lineHeight: 1.5, boxSizing: 'border-box',
     },
     onFocus: e => (e.target.style.borderColor = '#5E6AD2'),
     onBlur:  e => (e.target.style.borderColor = '#1E1E24'),
@@ -88,7 +83,7 @@ function Field({ label, value, onChange, multiline, placeholder }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {label && <label style={{ color: '#8A8F98', fontSize: 12, fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase' }}>{label}</label>}
-      {multiline ? <textarea {...s} rows={4} /> : <input {...s} type="text" />}
+      {multiline ? <textarea {...s} rows={4} /> : <input {...s} />}
     </div>
   )
 }
@@ -121,6 +116,163 @@ function Spinner() {
   )
 }
 
+// ── Onboarding modal (shown on first load) ────────────────────────────────────
+
+function OnboardingModal({ onSave }) {
+  const [value, setValue] = useState('')
+  const [error, setError] = useState('')
+
+  const handleSubmit = () => {
+    const trimmed = value.trim()
+    if (!trimmed) { setError('Please enter your API key.'); return }
+    if (!trimmed.startsWith('sk-ant-')) { setError('That doesn\'t look like an Anthropic API key (should start with sk-ant-).'); return }
+    onSave(trimmed)
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'rgba(0,0,0,0.85)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      backdropFilter: 'blur(4px)',
+    }}>
+      <div style={{
+        background: '#111113',
+        border: '1px solid #1E1E24',
+        borderRadius: 16,
+        padding: '40px 36px',
+        width: 440,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 20,
+        boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+      }}>
+        {/* Icon + title */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #5E6AD2, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <div>
+            <h2 style={{ color: '#FFFFFF', fontSize: 20, fontWeight: 700, letterSpacing: '-0.4px', margin: 0 }}>Enter your Anthropic API key</h2>
+            <p style={{ color: '#8A8F98', fontSize: 14, lineHeight: 1.6, margin: '8px 0 0 0' }}>
+              This tool uses the Anthropic API to generate ad copy and detect brand colors. Your key is stored only for this browser session and cleared when you close the tab.
+            </p>
+          </div>
+        </div>
+
+        {/* Input */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input
+            type="password"
+            value={value}
+            onChange={e => { setValue(e.target.value); setError('') }}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            placeholder="sk-ant-api03-..."
+            autoFocus
+            style={{
+              background: '#0A0A0B', border: `1px solid ${error ? '#e05252' : '#1E1E24'}`,
+              borderRadius: 8, color: '#fff', fontSize: 14, fontFamily: 'Inter, sans-serif',
+              padding: '12px 14px', outline: 'none', width: '100%', boxSizing: 'border-box',
+              transition: 'border-color 0.15s',
+            }}
+            onFocus={e => !error && (e.target.style.borderColor = '#5E6AD2')}
+            onBlur={e => !error && (e.target.style.borderColor = '#1E1E24')}
+          />
+          {error && <p style={{ color: '#e05252', fontSize: 12, margin: 0 }}>{error}</p>}
+        </div>
+
+        {/* CTA */}
+        <button
+          onClick={handleSubmit}
+          style={{
+            background: '#5E6AD2', border: 'none', borderRadius: 10,
+            color: '#fff', fontSize: 15, fontWeight: 600, fontFamily: 'Inter, sans-serif',
+            padding: '13px', cursor: 'pointer', letterSpacing: '-0.2px',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#4f5bbf')}
+          onMouseLeave={e => (e.currentTarget.style.background = '#5E6AD2')}
+        >
+          Get Started
+        </button>
+
+        {/* Footer note */}
+        <p style={{ color: '#3D4148', fontSize: 12, textAlign: 'center', margin: 0, lineHeight: 1.6 }}>
+          Get your API key at{' '}
+          <a
+            href="https://console.anthropic.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#5E6AD2', textDecoration: 'none' }}
+          >
+            console.anthropic.com
+          </a>
+          {' '}· Your key is never saved to disk or sent anywhere except Anthropic.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── Settings modal (change key mid-session) ───────────────────────────────────
+
+function SettingsModal({ onClose, onSave, hasKey }) {
+  const [value, setValue] = useState('')
+
+  const save = () => {
+    const trimmed = value.trim()
+    if (trimmed) onSave(trimmed)
+    onClose()
+  }
+
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#111113', border: '1px solid #1E1E24', borderRadius: 12, padding: 28, width: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>API Key</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8A8F98', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ background: hasKey ? 'rgba(34,197,94,0.06)' : 'rgba(94,106,210,0.08)', border: `1px solid ${hasKey ? 'rgba(34,197,94,0.2)' : 'rgba(94,106,210,0.2)'}`, borderRadius: 8, padding: '10px 12px' }}>
+          <p style={{ color: hasKey ? '#22c55e' : '#5E6AD2', fontSize: 12, fontWeight: 500, margin: 0 }}>
+            {hasKey ? '✓ Key active for this session.' : '⚠ No key set — enter one below.'}
+          </p>
+        </div>
+
+        <p style={{ color: '#8A8F98', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+          Your key is held in memory only and cleared when you close this tab. It is never written to disk, localStorage, or any server.
+          Get yours at{' '}
+          <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style={{ color: '#5E6AD2', textDecoration: 'none' }}>
+            console.anthropic.com
+          </a>
+        </p>
+
+        <input
+          type="password"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && save()}
+          placeholder="sk-ant-api03-…  (leave blank to keep current)"
+          style={{
+            background: '#0A0A0B', border: '1px solid #1E1E24', borderRadius: 8,
+            color: '#fff', fontSize: 13, fontFamily: 'Inter, sans-serif',
+            padding: '10px 12px', outline: 'none', width: '100%', boxSizing: 'border-box',
+          }}
+        />
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Btn primary onClick={save}>Update Key</Btn>
+          <Btn danger onClick={() => { onSave(''); onClose() }}>Clear & Sign Out</Btn>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Color editor ──────────────────────────────────────────────────────────────
 
 function ColorEditor({ colors, onChange }) {
@@ -136,14 +288,8 @@ function ColorEditor({ colors, onChange }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
         {COLOR_FIELDS.map(({ key, label }) => (
           <label key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', position: 'relative' }}>
-            <div style={{
-              width: '100%', height: 32, borderRadius: 7,
-              background: colors[key],
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 0 0 1px rgba(0,0,0,0.3)',
-            }} />
-            <input type="color" value={colors[key]}
-              onChange={e => onChange({ ...colors, [key]: e.target.value })}
+            <div style={{ width: '100%', height: 32, borderRadius: 7, background: colors[key], border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 0 0 1px rgba(0,0,0,0.3)' }} />
+            <input type="color" value={colors[key]} onChange={e => onChange({ ...colors, [key]: e.target.value })}
               style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} />
             <span style={{ color: '#3D4148', fontSize: 10, fontWeight: 500, textAlign: 'center' }}>{label}</span>
           </label>
@@ -158,18 +304,18 @@ function ColorEditor({ colors, onChange }) {
 function BrandBadge({ brand, colors }) {
   return (
     <div style={{ background: '#0D0D0F', border: '1px solid #1E1E24', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
-      {brand.logoSrc ? (
-        <img src={brand.logoSrc} alt={brand.name} style={{ height: 28, width: 'auto', maxWidth: 80, objectFit: 'contain', borderRadius: 4 }} />
-      ) : (
-        <div style={{ width: 28, height: 28, borderRadius: 6, background: `linear-gradient(135deg, ${colors.accent}, #8B5CF6)`, flexShrink: 0 }} />
-      )}
+      {brand.logoSrc
+        ? <img src={brand.logoSrc} alt={brand.name} style={{ height: 28, width: 'auto', maxWidth: 80, objectFit: 'contain', borderRadius: 4 }} />
+        : <div style={{ width: 28, height: 28, borderRadius: 6, background: `linear-gradient(135deg, ${colors.accent}, #8B5CF6)`, flexShrink: 0 }} />
+      }
       <div style={{ minWidth: 0, flex: 1 }}>
         <p style={{ color: '#D0D3DA', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{brand.name}</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
           <div style={{ width: 10, height: 10, borderRadius: 3, background: colors.accent, border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }} />
           <span style={{ color: '#3D4148', fontSize: 11, fontFamily: 'monospace' }}>{colors.accent}</span>
-          {!colors.isDark && <span style={{ color: '#f59e0b', fontSize: 10, fontWeight: 600, letterSpacing: '0.3px' }}>LIGHT</span>}
-          {colors.isDark  && <span style={{ color: '#6366f1', fontSize: 10, fontWeight: 600, letterSpacing: '0.3px' }}>DARK</span>}
+          <span style={{ color: colors.isDark ? '#6366f1' : '#f59e0b', fontSize: 10, fontWeight: 600, letterSpacing: '0.3px' }}>
+            {colors.isDark ? 'DARK' : 'LIGHT'}
+          </span>
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
@@ -180,55 +326,27 @@ function BrandBadge({ brand, colors }) {
   )
 }
 
-// ── Settings modal ────────────────────────────────────────────────────────────
-
-function SettingsModal({ onClose }) {
-  const [value, setValue] = useState(localStorage.getItem(LS_KEY) || '')
-  const save = () => { value.trim() ? localStorage.setItem(LS_KEY, value.trim()) : localStorage.removeItem(LS_KEY); onClose() }
-  return (
-    <div onClick={e => e.target === e.currentTarget && onClose()}
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#111113', border: '1px solid #1E1E24', borderRadius: 12, padding: 28, width: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>API Key Settings</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8A8F98', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</button>
-        </div>
-        <p style={{ color: '#8A8F98', fontSize: 13, lineHeight: 1.6 }}>
-          Paste your Anthropic API key. Saved to localStorage.{' '}
-          <code style={{ color: '#5E6AD2' }}>VITE_ANTHROPIC_API_KEY</code> in <code style={{ color: '#5E6AD2' }}>.env</code> takes priority.
-        </p>
-        {ENV_API_KEY && (
-          <div style={{ background: 'rgba(94,106,210,0.08)', border: '1px solid rgba(94,106,210,0.2)', borderRadius: 8, padding: '10px 12px' }}>
-            <p style={{ color: '#5E6AD2', fontSize: 12, fontWeight: 500 }}>✓ Key loaded from .env</p>
-          </div>
-        )}
-        <input type="password" value={value} onChange={e => setValue(e.target.value)} placeholder="sk-ant-api03-..."
-          style={{ background: '#0A0A0B', border: '1px solid #1E1E24', borderRadius: 8, color: '#fff', fontSize: 13, fontFamily: 'Inter, sans-serif', padding: '10px 12px', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Btn primary onClick={save}>Save Key</Btn>
-          <Btn danger onClick={() => { localStorage.removeItem(LS_KEY); setValue(''); onClose() }}>Clear</Btn>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ── App ───────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  // API key — session memory only, never persisted
+  const [apiKey, setApiKey]           = useState('')
+  const [showOnboarding, setShowOnboarding] = useState(true)
+  const [showSettings, setShowSettings]     = useState(false)
+
   // Single ad
-  const [headline, setHeadline] = useState(DEFAULT_HEADLINE)
+  const [headline, setHeadline]   = useState(DEFAULT_HEADLINE)
   const [paragraph, setParagraph] = useState(DEFAULT_PARAGRAPH)
-  const [cta, setCta] = useState(DEFAULT_CTA)
+  const [cta, setCta]             = useState(DEFAULT_CTA)
   const [exporting, setExporting] = useState(false)
   const adRef = useRef(null)
 
   // Brand
-  const [brand, setBrand] = useState(DEFAULT_BRAND)
+  const [brand, setBrand]   = useState(DEFAULT_BRAND)
   const [colors, setColors] = useState(DEFAULT_COLORS)
 
   // Bulk
-  const [csvRows, setCsvRows] = useState([])
+  const [csvRows, setCsvRows]   = useState([])
   const [csvError, setCsvError] = useState('')
   const [bulkData, setBulkData] = useState({ headline: '', paragraph: '', cta: '' })
   const [progress, setProgress] = useState({ current: 0, total: 0, running: false })
@@ -236,19 +354,21 @@ export default function App() {
   const fileInputRef = useRef(null)
 
   // Generation
-  const [genUrl, setGenUrl] = useState('')
+  const [genUrl, setGenUrl]     = useState('')
   const [genCount, setGenCount] = useState(20)
   const [generating, setGenerating] = useState(false)
-  const [genSteps, setGenSteps] = useState([])   // array of { text, done, error }
-  const [genError, setGenError] = useState('')
-
-  const [showSettings, setShowSettings] = useState(false)
+  const [genSteps, setGenSteps]     = useState([])
+  const [genError, setGenError]     = useState('')
 
   const hasBrand = brand !== DEFAULT_BRAND
   const hasRows  = csvRows.length > 0
 
-  const pushStep = (text, done = false, error = false) =>
-    setGenSteps(s => [...s, { text, done, error }])
+  const handleSetKey = (key) => {
+    setApiKey(key)
+    setShowOnboarding(false)
+  }
+
+  const pushStep     = (text, done = false, error = false) => setGenSteps(s => [...s, { text, done, error }])
   const resolveLastStep = (done = true, error = false) =>
     setGenSteps(s => s.map((step, i) => i === s.length - 1 ? { ...step, done, error } : step))
 
@@ -304,30 +424,24 @@ export default function App() {
     setProgress(p => ({ ...p, running: false }))
   }
 
-  // ── AI generation (3 sequential steps with visible status) ─────────────────
+  // ── AI generation ──────────────────────────────────────────────────────────
 
   const handleGenerate = async () => {
     if (generating) return
+    if (!apiKey) { setShowOnboarding(true); return }
     setGenError(''); setGenSteps([])
-    const apiKey = getApiKey()
-    if (!apiKey) { setGenError('No API key found. Click ⚙ to add one.'); return }
-    if (!genUrl.trim()) { setGenError('Please enter a website URL.'); return }
     setGenerating(true)
-
     try {
-      // Step 1: Fetch page
       pushStep('Fetching website content…')
       const { doc, text } = await fetchPageContent(genUrl.trim())
       resolveLastStep()
 
-      // Step 2: Brand identity + color extraction (both need the page)
       pushStep('Extracting brand identity…')
       const identity = await extractBrandIdentity(doc, genUrl.trim())
       if (identity.fontFamily) loadGoogleFont(identity.fontFamily)
       setBrand({ name: identity.name, logoSrc: identity.logoSrc, fontFamily: identity.fontFamily, description: identity.description })
       resolveLastStep()
 
-      // Step 3: Colors via Claude
       pushStep('Analyzing brand colors with Claude…')
       let detectedColors = DEFAULT_COLORS
       try {
@@ -337,10 +451,8 @@ export default function App() {
       } catch (colorErr) {
         resolveLastStep(true, true)
         pushStep(`Color detection failed (${colorErr.message}) — using defaults`, true, true)
-        // Don't abort — continue with default colors
       }
 
-      // Step 4: Ad copy
       pushStep(`Generating ${genCount} ads with Claude…`)
       const ads = await generateAdsWithClaude(text, genCount, apiKey, identity)
       setCsvRows(ads); setCsvError('')
@@ -349,9 +461,7 @@ export default function App() {
     } catch (err) {
       resolveLastStep(false, true)
       setGenError(err.message || 'Something went wrong.')
-    } finally {
-      setGenerating(false)
-    }
+    } finally { setGenerating(false) }
   }
 
   const pct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
@@ -365,7 +475,20 @@ export default function App() {
           brandName={brand.name} logoSrc={brand.logoSrc} colors={colors} brandFont={brand.fontFamily} />
       </div>
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {/* Onboarding gate */}
+      {showOnboarding && <OnboardingModal onSave={handleSetKey} />}
+
+      {/* Settings modal */}
+      {showSettings && (
+        <SettingsModal
+          hasKey={!!apiKey}
+          onClose={() => setShowSettings(false)}
+          onSave={(key) => {
+            setApiKey(key)
+            if (!key) setShowOnboarding(true)
+          }}
+        />
+      )}
 
       {/* Top bar */}
       <div style={{ borderBottom: '1px solid #1A1A1F', padding: '14px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -373,8 +496,16 @@ export default function App() {
           <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg, #5E6AD2 0%, #8B5CF6 100%)' }} />
           <span style={{ color: '#fff', fontSize: 15, fontWeight: 600, letterSpacing: '-0.2px' }}>Ad Generator</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ color: '#3D4148', fontSize: 13 }}>1080 × 1080 px · Facebook & Instagram</span>
+
+          {/* Key status pill */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, background: apiKey ? 'rgba(34,197,94,0.07)' : 'rgba(239,68,68,0.07)', border: `1px solid ${apiKey ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: apiKey ? '#22c55e' : '#ef4444', boxShadow: apiKey ? '0 0 4px rgba(34,197,94,0.6)' : '0 0 4px rgba(239,68,68,0.5)' }} />
+            <span style={{ color: apiKey ? '#22c55e' : '#ef4444', fontSize: 11, fontWeight: 600 }}>{apiKey ? 'Key active' : 'No key'}</span>
+          </div>
+
+          {/* Settings gear */}
           <button onClick={() => setShowSettings(true)} title="API Key Settings"
             style={{ background: 'none', border: '1px solid #1E1E24', borderRadius: 7, color: '#3D4148', cursor: 'pointer', padding: '5px 7px', display: 'flex', alignItems: 'center', transition: 'color 0.15s, border-color 0.15s' }}
             onMouseEnter={e => { e.currentTarget.style.color = '#8A8F98'; e.currentTarget.style.borderColor = '#2E3138' }}
@@ -409,21 +540,14 @@ export default function App() {
               <Btn primary onClick={handleGenerate} disabled={generating}>{generating ? 'Working…' : 'Generate'}</Btn>
             </div>
 
-            {/* Step-by-step status log */}
             {genSteps.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {genSteps.map((step, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    {step.error ? (
-                      <span style={{ color: '#e05252', fontSize: 13, flexShrink: 0 }}>✕</span>
-                    ) : step.done ? (
-                      <span style={{ color: '#22c55e', fontSize: 13, flexShrink: 0 }}>✓</span>
-                    ) : (
-                      <Spinner />
-                    )}
-                    <span style={{ color: step.error ? '#e05252' : step.done ? '#8A8F98' : '#D0D3DA', fontSize: 12, lineHeight: 1.5 }}>
-                      {step.text}
-                    </span>
+                    {step.error ? <span style={{ color: '#e05252', fontSize: 13, flexShrink: 0 }}>✕</span>
+                      : step.done ? <span style={{ color: '#22c55e', fontSize: 13, flexShrink: 0 }}>✓</span>
+                      : <Spinner />}
+                    <span style={{ color: step.error ? '#e05252' : step.done ? '#8A8F98' : '#D0D3DA', fontSize: 12, lineHeight: 1.5 }}>{step.text}</span>
                   </div>
                 ))}
               </div>
