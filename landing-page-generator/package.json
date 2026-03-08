@@ -1,0 +1,23 @@
+{
+  "name": "landing-page-generator",
+  "version": "1.0.0",
+  "description": "SEO-optimized landing page generator with AI keyword research and Strapi CMS integration",
+  "type": "module",
+  "scripts": {
+    "generate": "tsx generate.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.3",
+    "cheerio": "^1.2.0",
+    "commander": "^12.1.0",
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5",
+    "inquirer": "^9.3.7"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.9",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.5.0"
+  }
+}
