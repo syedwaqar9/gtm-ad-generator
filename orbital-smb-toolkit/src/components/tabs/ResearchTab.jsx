@@ -114,34 +114,28 @@ export default function ResearchTab({ config, onMissingKey }) {
       let customerFeedbackResearch = ''
       let redditResearch = ''
 
-      // Step 1: Website-specific research
+      // Step 1: Website-specific research (only when website is provided)
       if (website.trim()) {
         if (config.perplexityKey) {
           setLoadingStep('Researching their services, reviews, and competitors...')
-          try {
-            const websiteHost = website.trim().replace(/^https?:\/\//, '').split('/')[0]
-            const [servicesResult, siteReviewsResult, competitorsResult] = await Promise.all([
-              callPerplexity({
-                apiKey: config.perplexityKey,
-                query: `${businessName} site:${websiteHost} services pricing features`,
-              }),
-              callPerplexity({
-                apiKey: config.perplexityKey,
-                query: `${businessName} reviews complaints problems customers`,
-              }),
-              callPerplexity({
-                apiKey: config.perplexityKey,
-                query: `${businessName} competitors alternatives vs`,
-              }),
-            ])
-            websiteServicesResearch = servicesResult || ''
-            websiteReviewsResearch = siteReviewsResult || ''
-            websiteCompetitorsResearch = competitorsResult || ''
-          } catch {
-            websiteServicesResearch = ''
-            websiteReviewsResearch = ''
-            websiteCompetitorsResearch = ''
-          }
+          const websiteHost = website.trim().replace(/^https?:\/\//, '').split('/')[0]
+          const q1 = `${businessName} site:${websiteHost} services pricing features`
+          const q2 = `${businessName} reviews complaints problems customers`
+          const q3 = `${businessName} competitors alternatives vs`
+          console.log('[ResearchTab] Step 1 queries:', { q1, q2, q3 })
+          const [s1, s2, s3] = await Promise.allSettled([
+            callPerplexity({ apiKey: config.perplexityKey, query: q1 }),
+            callPerplexity({ apiKey: config.perplexityKey, query: q2 }),
+            callPerplexity({ apiKey: config.perplexityKey, query: q3 }),
+          ])
+          websiteServicesResearch = s1.status === 'fulfilled' ? (s1.value || '') : (console.warn('[ResearchTab] Step 1 search 1 failed:', s1.reason), '')
+          websiteReviewsResearch  = s2.status === 'fulfilled' ? (s2.value || '') : (console.warn('[ResearchTab] Step 1 search 2 failed:', s2.reason), '')
+          websiteCompetitorsResearch = s3.status === 'fulfilled' ? (s3.value || '') : (console.warn('[ResearchTab] Step 1 search 3 failed:', s3.reason), '')
+          console.log('[ResearchTab] Step 1 results:', {
+            websiteServicesResearch: websiteServicesResearch.slice(0, 120),
+            websiteReviewsResearch: websiteReviewsResearch.slice(0, 120),
+            websiteCompetitorsResearch: websiteCompetitorsResearch.slice(0, 120),
+          })
         } else {
           // Fallback: Claude inference when no Perplexity key
           setLoadingStep('Analyzing their website...')
@@ -153,39 +147,34 @@ export default function ResearchTab({ config, onMissingKey }) {
               maxTokens: 400,
             })
             websiteServicesResearch = typeof inferred === 'string' ? inferred : JSON.stringify(inferred)
-          } catch {
+          } catch (e) {
+            console.warn('[ResearchTab] Claude website inference failed:', e)
             websiteServicesResearch = 'Could not access website. Will use business name and vertical context.'
           }
         }
       }
 
-      // Step 2: General reviews + Reddit searches
+      // Step 2: Core reviews + Reddit searches — always run when Perplexity key is present
       if (config.perplexityKey) {
-        setLoadingStep('Searching customer feedback and Reddit discussions...')
-        try {
-          const locationStr = location.trim() ? ` ${location.trim()}` : ''
-          const [reviewsResult, feedbackResult, redditResult] = await Promise.all([
-            callPerplexity({
-              apiKey: config.perplexityKey,
-              query: `${businessName}${locationStr} reviews`,
-            }),
-            callPerplexity({
-              apiKey: config.perplexityKey,
-              query: `${businessName} customer complaints OR customer experience OR patient experience`,
-            }),
-            callPerplexity({
-              apiKey: config.perplexityKey,
-              query: `${vertical} owner pain points frustrations software site:reddit.com`,
-            }),
-          ])
-          reviewsResearch = reviewsResult || ''
-          customerFeedbackResearch = feedbackResult || ''
-          redditResearch = redditResult || ''
-        } catch {
-          reviewsResearch = ''
-          customerFeedbackResearch = ''
-          redditResearch = ''
-        }
+        setLoadingStep('Searching reviews, customer feedback, and Reddit...')
+        const locationStr = location.trim() ? ` ${location.trim()}` : ''
+        const q4 = `${businessName}${locationStr} reviews`
+        const q5 = `${businessName} customer complaints OR customer experience OR patient experience`
+        const q6 = `${vertical} owner pain points frustrations software site:reddit.com`
+        console.log('[ResearchTab] Step 2 queries:', { q4, q5, q6 })
+        const [r1, r2, r3] = await Promise.allSettled([
+          callPerplexity({ apiKey: config.perplexityKey, query: q4 }),
+          callPerplexity({ apiKey: config.perplexityKey, query: q5 }),
+          callPerplexity({ apiKey: config.perplexityKey, query: q6 }),
+        ])
+        reviewsResearch         = r1.status === 'fulfilled' ? (r1.value || '') : (console.warn('[ResearchTab] Step 2 reviews failed:', r1.reason), '')
+        customerFeedbackResearch = r2.status === 'fulfilled' ? (r2.value || '') : (console.warn('[ResearchTab] Step 2 feedback failed:', r2.reason), '')
+        redditResearch          = r3.status === 'fulfilled' ? (r3.value || '') : (console.warn('[ResearchTab] Step 2 reddit failed:', r3.reason), '')
+        console.log('[ResearchTab] Step 2 results:', {
+          reviewsResearch: reviewsResearch.slice(0, 120),
+          customerFeedbackResearch: customerFeedbackResearch.slice(0, 120),
+          redditResearch: redditResearch.slice(0, 120),
+        })
       }
 
       // Step 3: Synthesize with Claude
