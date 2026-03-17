@@ -107,30 +107,61 @@ export default function ResearchTab({ config, onMissingKey }) {
       : config.productDescription
 
     try {
-      let websiteInfo = ''
+      let websiteServicesResearch = ''
+      let websiteReviewsResearch = ''
+      let websiteCompetitorsResearch = ''
       let reviewsResearch = ''
       let customerFeedbackResearch = ''
       let redditResearch = ''
 
-      // Step 1: Website research via Claude
+      // Step 1: Website-specific research
       if (website.trim()) {
-        setLoadingStep('Analyzing their website...')
-        try {
-          websiteInfo = await callClaude({
-            apiKey: config.anthropicKey,
-            systemPrompt: 'You are a sales researcher. Analyze the provided business website URL and extract key information.',
-            userPrompt: `Based on the website URL "${website}", tell me what you know or can reasonably infer about this ${vertical} business called "${businessName}": what services they likely offer, estimated size, any notable features. If you cannot access the URL, make reasonable inferences based on the business name and vertical. Keep it brief (3-4 sentences).`,
-            maxTokens: 400,
-          })
-          if (typeof websiteInfo !== 'string') websiteInfo = JSON.stringify(websiteInfo)
-        } catch {
-          websiteInfo = `Could not access website. Will use business name and vertical context.`
+        if (config.perplexityKey) {
+          setLoadingStep('Researching their services, reviews, and competitors...')
+          try {
+            const websiteHost = website.trim().replace(/^https?:\/\//, '').split('/')[0]
+            const [servicesResult, siteReviewsResult, competitorsResult] = await Promise.all([
+              callPerplexity({
+                apiKey: config.perplexityKey,
+                query: `${businessName} site:${websiteHost} services pricing features`,
+              }),
+              callPerplexity({
+                apiKey: config.perplexityKey,
+                query: `${businessName} reviews complaints problems customers`,
+              }),
+              callPerplexity({
+                apiKey: config.perplexityKey,
+                query: `${businessName} competitors alternatives vs`,
+              }),
+            ])
+            websiteServicesResearch = servicesResult || ''
+            websiteReviewsResearch = siteReviewsResult || ''
+            websiteCompetitorsResearch = competitorsResult || ''
+          } catch {
+            websiteServicesResearch = ''
+            websiteReviewsResearch = ''
+            websiteCompetitorsResearch = ''
+          }
+        } else {
+          // Fallback: Claude inference when no Perplexity key
+          setLoadingStep('Analyzing their website...')
+          try {
+            const inferred = await callClaude({
+              apiKey: config.anthropicKey,
+              systemPrompt: 'You are a sales researcher. Analyze the provided business website URL and extract key information.',
+              userPrompt: `Based on the website URL "${website}", tell me what you know or can reasonably infer about this ${vertical} business called "${businessName}": what services they likely offer, estimated size, any notable features. If you cannot access the URL, make reasonable inferences based on the business name and vertical. Keep it brief (3-4 sentences).`,
+              maxTokens: 400,
+            })
+            websiteServicesResearch = typeof inferred === 'string' ? inferred : JSON.stringify(inferred)
+          } catch {
+            websiteServicesResearch = 'Could not access website. Will use business name and vertical context.'
+          }
         }
       }
 
-      // Step 2: Three Perplexity searches in parallel
+      // Step 2: General reviews + Reddit searches
       if (config.perplexityKey) {
-        setLoadingStep('Searching reviews, customer feedback, and Reddit...')
+        setLoadingStep('Searching customer feedback and Reddit discussions...')
         try {
           const locationStr = location.trim() ? ` ${location.trim()}` : ''
           const [reviewsResult, feedbackResult, redditResult] = await Promise.all([
@@ -150,7 +181,7 @@ export default function ResearchTab({ config, onMissingKey }) {
           reviewsResearch = reviewsResult || ''
           customerFeedbackResearch = feedbackResult || ''
           redditResearch = redditResult || ''
-        } catch (e) {
+        } catch {
           reviewsResearch = ''
           customerFeedbackResearch = ''
           redditResearch = ''
@@ -171,8 +202,10 @@ Business being called:
 - Name: ${businessName}
 - Website: ${website || 'Not provided'}
 - Location: ${location || 'Not specified'}
-${websiteInfo ? `\nWebsite Analysis:\n${websiteInfo}` : ''}
-${reviewsResearch ? `\nGoogle/Web Reviews Research:\n${reviewsResearch}` : ''}
+${websiteServicesResearch ? `\nWebsite — Services, Pricing & Features Research:\n${websiteServicesResearch}` : ''}
+${websiteReviewsResearch ? `\nWebsite — Customer Reviews & Complaints Research:\n${websiteReviewsResearch}` : ''}
+${websiteCompetitorsResearch ? `\nWebsite — Competitors & Positioning Research:\n${websiteCompetitorsResearch}` : ''}
+${reviewsResearch ? `\nBroad Reviews Research:\n${reviewsResearch}` : ''}
 ${customerFeedbackResearch ? `\nCustomer Feedback Research:\n${customerFeedbackResearch}` : ''}
 ${redditResearch ? `\nReddit Research (${vertical} owner discussions):\n${redditResearch}` : ''}
 
@@ -194,7 +227,7 @@ The entire brief should read like a sales intelligence report tailored to THIS r
 
 Generate a structured research brief with these exact fields:
 
-1. business_overview: 2-3 sentences about what this business does, location, services, and estimated size.
+1. business_overview: 2-3 sentences about what this business does, location, services, and estimated size. If website research is available, also extract: (a) specific services/products they offer, (b) pricing model if visible, (c) technology stack or tools they mention, (d) unique selling points or positioning, (e) number of locations if applicable, (f) any recent news, hiring, or expansion signals. Include these as a second paragraph if found.
 
 2. customer_reviews: ${config.perplexityKey ? `Object with these keys:
    - overall_rating: string like "4.2 stars on Google" if found, or null if not found
@@ -207,7 +240,7 @@ Generate a structured research brief with these exact fields:
 
 4. likely_pain_points: Array of 3 specific pain points this business probably faces, each explicitly connected to a feature or capability of the seller's product.
 
-5. talking_points: Array of 3 talking points, each referencing a specific finding from the research (reviews or Reddit) AND connecting it to a concrete capability of the seller's product.
+5. talking_points: Array of 3 talking points, each referencing a specific finding from the research (website services, reviews, competitor positioning, or Reddit) AND connecting it to a concrete capability of the seller's product. If competitor research is available, one talking point should address how the seller's product compares to or improves on what competitors offer this business.
 
 6. suggested_opening: One personalized opening line that references a specific pain point from the research that the seller's product directly solves.
 
