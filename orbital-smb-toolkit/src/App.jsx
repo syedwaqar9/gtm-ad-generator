@@ -6,6 +6,7 @@ import ColdCallTab from './components/tabs/ColdCallTab'
 import ObjectionTab from './components/tabs/ObjectionTab'
 import ResearchTab from './components/tabs/ResearchTab'
 import BattlecardTab from './components/tabs/BattlecardTab'
+import CompetitiveIntelTab from './components/tabs/CompetitiveIntelTab'
 import { callPerplexity } from './api/perplexity'
 
 const TABS = [
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'objection', icon: '🛡️', label: 'Objection Handler' },
   { id: 'research', icon: '🔍', label: 'Pre-Call Research' },
   { id: 'battlecard', icon: '⚔️', label: 'Sales Battlecard' },
+  { id: 'competitive', icon: '🔎', label: 'Competitive Intel' },
 ]
 
 const DEFAULT_CONFIG = {
@@ -109,6 +111,11 @@ export default function App() {
       sections.push(generatedOutputs.battlecard)
       sections.push('\n---\n')
     }
+    if (generatedOutputs.competitive) {
+      sections.push('## Competitive Intel Brief\n')
+      sections.push(generatedOutputs.competitive)
+      sections.push('\n---\n')
+    }
 
     sections.push('\n*Powered by [Orbital](https://www.withorbital.com/?utm_source=smb-toolkit&utm_medium=tool&utm_campaign=sales-play) — SMB Account Intelligence*')
 
@@ -196,6 +203,13 @@ export default function App() {
           )}
           {activeTab === 'battlecard' && (
             <BattlecardTab config={configWithContext} onMissingKey={handleMissingKey} />
+          )}
+          {activeTab === 'competitive' && (
+            <CompetitiveIntelTab
+              config={configWithContext}
+              onMissingKey={handleMissingKey}
+              onOutputGenerated={text => setGeneratedOutputs(prev => ({ ...prev, competitive: text }))}
+            />
           )}
         </div>
 
