@@ -12,9 +12,9 @@
   --border-light: #2A2A30;
   --text-primary: #FFFFFF;
   --text-secondary: #8A8F98;
-  --accent: #5E6AD2;
-  --accent-hover: #6B78E5;
-  --accent-glow: rgba(94, 106, 210, 0.2);
+  --accent: #0F6E56;
+  --accent-hover: #138D6E;
+  --accent-glow: rgba(15, 110, 86, 0.2);
   --success: #45B36B;
   --warning: #E5A91B;
   --error: #E5534B;
@@ -227,9 +227,9 @@ select.input-field option {
 }
 
 .badge-accent {
-  background: rgba(94, 106, 210, 0.15);
+  background: rgba(15, 110, 86, 0.15);
   color: var(--accent);
-  border: 1px solid rgba(94, 106, 210, 0.3);
+  border: 1px solid rgba(15, 110, 86, 0.3);
 }
 
 .badge-success {

@@ -19,7 +19,7 @@ export default function OrbitalCTA({ vertical }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style={{
           width: 40, height: 40, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #5E6AD2, #9B6DFF)',
+          background: 'linear-gradient(135deg, #0F6E56, #16A87F)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 700, fontSize: 18, color: '#fff', flexShrink: 0,
         }}>O</div>

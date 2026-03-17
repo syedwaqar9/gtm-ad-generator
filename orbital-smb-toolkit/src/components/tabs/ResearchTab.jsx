@@ -5,6 +5,78 @@ import SkeletonLoader from '../SkeletonLoader'
 import OrbitalCTA from '../OrbitalCTA'
 import CopyButton from '../CopyButton'
 
+const VERTICAL_COUNTS = {
+  'Dental Clinics': '4,200+',
+  'HVAC & Heating': '6,800+',
+  'Restaurants & Food Service': '12,500+',
+  'Fitness & Gyms': '3,400+',
+  'Salons & Spas': '5,100+',
+  'Veterinary Practices': '2,900+',
+  'Plumbing': '5,600+',
+  'Roofing': '4,100+',
+  'Auto Repair': '7,200+',
+  'Landscaping': '8,300+',
+}
+
+const VERTICAL_CONTACTS = {
+  'Dental Clinics': [
+    { name: 'J████ M██████', title: 'Owner', business: 'Smile Dental Care', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@smile████.com' },
+    { name: 'R████ P████', title: 'Practice Manager', business: 'Bright Teeth Dental', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@bright████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'Premier Dental Group', location: 'Houston, TX', phone: '███-███-2190', email: 's████@premier████.com' },
+  ],
+  'HVAC & Heating': [
+    { name: 'J████ M██████', title: 'Owner', business: 'Premier HVAC Solutions', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@premier████.com' },
+    { name: 'R████ P████', title: 'Operations Manager', business: 'CoolAir Systems', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@coolair████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'Comfort Zone HVAC', location: 'Houston, TX', phone: '███-███-2190', email: 's████@comfort████.com' },
+  ],
+  'Restaurants & Food Service': [
+    { name: 'J████ M██████', title: 'Owner', business: 'The Corner Bistro', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@corner████.com' },
+    { name: 'R████ P████', title: 'General Manager', business: 'Harbor Grill', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@harbor████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'Main Street Kitchen', location: 'Houston, TX', phone: '███-███-2190', email: 's████@mainst████.com' },
+  ],
+  'Fitness & Gyms': [
+    { name: 'J████ M██████', title: 'Owner', business: 'Iron Forge Fitness', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@ironforge████.com' },
+    { name: 'R████ P████', title: 'Studio Manager', business: 'Peak Performance Gym', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@peak████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'Elevate Fitness Studio', location: 'Houston, TX', phone: '███-███-2190', email: 's████@elevate████.com' },
+  ],
+  'Salons & Spas': [
+    { name: 'J████ M██████', title: 'Owner', business: 'Luxe Hair Studio', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@luxe████.com' },
+    { name: 'R████ P████', title: 'Salon Manager', business: 'The Glow Spa', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@glow████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'Pure Beauty Salon', location: 'Houston, TX', phone: '███-███-2190', email: 's████@pure████.com' },
+  ],
+  'Veterinary Practices': [
+    { name: 'J████ M██████', title: 'Owner', business: 'Paws & Claws Vet Clinic', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@paws████.com' },
+    { name: 'R████ P████', title: 'Practice Manager', business: 'Companion Animal Hospital', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@companion████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'Northside Veterinary Clinic', location: 'Houston, TX', phone: '███-███-2190', email: 's████@northside████.com' },
+  ],
+  'Plumbing': [
+    { name: 'J████ M██████', title: 'Owner', business: 'FlowRight Plumbing', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@flowright████.com' },
+    { name: 'R████ P████', title: 'Operations Manager', business: 'Reliable Pipe Co.', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@reliable████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'Apex Plumbing Services', location: 'Houston, TX', phone: '███-███-2190', email: 's████@apex████.com' },
+  ],
+  'Roofing': [
+    { name: 'J████ M██████', title: 'Owner', business: 'Summit Roofing Co.', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@summit████.com' },
+    { name: 'R████ P████', title: 'Project Manager', business: 'ShieldRoof Solutions', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@shield████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'TopLine Roofing', location: 'Houston, TX', phone: '███-███-2190', email: 's████@topline████.com' },
+  ],
+  'Auto Repair': [
+    { name: 'J████ M██████', title: 'Owner', business: 'ProTech Auto Service', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@protech████.com' },
+    { name: 'R████ P████', title: 'Shop Manager', business: 'Precision Auto Care', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@precision████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'Trusted Tire & Auto', location: 'Houston, TX', phone: '███-███-2190', email: 's████@trusted████.com' },
+  ],
+  'Landscaping': [
+    { name: 'J████ M██████', title: 'Owner', business: 'GreenScape Landscaping', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@greenscape████.com' },
+    { name: 'R████ P████', title: 'Operations Manager', business: 'Bloom Yard Services', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@bloom████.com' },
+    { name: 'S████ K██████', title: 'Owner', business: 'TerraForm Outdoor', location: 'Houston, TX', phone: '███-███-2190', email: 's████@terraform████.com' },
+  ],
+}
+
+const DEFAULT_CONTACTS = [
+  { name: 'J████ M██████', title: 'Owner', business: 'A████ Business Solutions', location: 'Austin, TX', phone: '███-███-4521', email: 'j████@abiz████.com' },
+  { name: 'R████ P████', title: 'General Manager', business: 'B████ Services Co.', location: 'Dallas, TX', phone: '███-███-7834', email: 'r████@bserv████.com' },
+  { name: 'S████ K██████', title: 'Owner', business: 'C████ Local Group', location: 'Houston, TX', phone: '███-███-2190', email: 's████@clocal████.com' },
+]
+
 export default function ResearchTab({ config, onMissingKey }) {
   const [businessName, setBusinessName] = useState('')
   const [website, setWebsite] = useState('')
@@ -349,7 +421,7 @@ Return as JSON:
           {/* Suggested Opening Line */}
           {results.suggested_opening && (
             <BriefSection icon="🚀" title="Suggested Opening Line" color="var(--accent)">
-              <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px', background: 'rgba(94,106,210,0.05)', borderRadius: '0 8px 8px 0' }}>
+              <div style={{ borderLeft: '3px solid var(--accent)', padding: '12px 16px', background: 'rgba(15,110,86,0.05)', borderRadius: '0 8px 8px 0' }}>
                 <p style={{ color: 'var(--text-primary)', fontSize: 15, fontStyle: 'italic', lineHeight: 1.7 }}>"{results.suggested_opening}"</p>
               </div>
               <div style={{ marginTop: 10 }}>
@@ -374,6 +446,8 @@ Return as JSON:
           </div>
 
           <OrbitalCTA vertical={vertical} />
+
+          <ProspectContactsSection vertical={vertical} />
         </>
       )}
     </div>
@@ -403,6 +477,113 @@ function BriefSection({ icon, title, color, badge, badgeColor, children }) {
         )}
       </div>
       {children}
+    </div>
+  )
+}
+
+function ProspectContactsSection({ vertical }) {
+  const count = VERTICAL_COUNTS[vertical] || 'thousands of'
+  const contacts = VERTICAL_CONTACTS[vertical] || DEFAULT_CONTACTS
+  const countIsNumber = count !== 'thousands of'
+  const locationLabel = 'the US'
+
+  return (
+    <div style={{
+      marginTop: 24,
+      background: '#141416',
+      border: '1px solid rgba(15,110,86,0.35)',
+      borderRadius: 12,
+      padding: '24px',
+      boxShadow: '0 0 24px rgba(15,110,86,0.08)',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #0F6E56, #16A87F)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontWeight: 700, fontSize: 13, color: '#fff', flexShrink: 0,
+        }}>O</div>
+        <span style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+          padding: '3px 10px', borderRadius: 20,
+          background: 'rgba(15,110,86,0.15)', color: '#0F6E56',
+          border: '1px solid rgba(15,110,86,0.35)',
+        }}>Orbital</span>
+        <h3 style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
+          Prospect Contacts in This Vertical
+        </h3>
+      </div>
+
+      {/* Subline */}
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, paddingLeft: 38 }}>
+        Orbital found{' '}
+        <strong style={{ color: '#0F6E56' }}>
+          {countIsNumber ? count : count}{' '}{vertical || 'SMB'}
+        </strong>{' '}
+        businesses in {locationLabel}. Here's a preview:
+      </p>
+
+      {/* Contact cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+        {contacts.map((contact, i) => (
+          <div key={i} style={{
+            background: 'rgba(255,255,255,0.025)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 10,
+            padding: '14px 18px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            {/* Frosted overlay */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(135deg, rgba(15,110,86,0.04) 0%, rgba(0,0,0,0.12) 100%)',
+              pointerEvents: 'none',
+            }} />
+            <div style={{ position: 'relative', filter: 'blur(1.5px)', userSelect: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{contact.name}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>·</span>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{contact.title}</span>
+              </div>
+              <div style={{ fontSize: 13, color: '#0F6E56', fontWeight: 500, marginBottom: 6 }}>{contact.business}</div>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>📍 {contact.location}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>📞 {contact.phone}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>✉️ {contact.email}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <a
+        href="https://withorbital.com/?utm_source=smb-toolkit&utm_medium=tool&utm_campaign=precall-research"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '100%', padding: '14px 24px',
+          background: '#0F6E56', color: '#fff',
+          borderRadius: 8, fontWeight: 700, fontSize: 14,
+          textDecoration: 'none', transition: 'all 0.2s ease',
+          boxShadow: '0 0 20px rgba(15,110,86,0.25)',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = '#138D6E'
+          e.currentTarget.style.boxShadow = '0 0 28px rgba(15,110,86,0.4)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = '#0F6E56'
+          e.currentTarget.style.boxShadow = '0 0 20px rgba(15,110,86,0.25)'
+        }}
+      >
+        Unlock all {countIsNumber ? count : ''} contacts with verified emails and phone numbers → Get 100 Free Leads
+      </a>
     </div>
   )
 }

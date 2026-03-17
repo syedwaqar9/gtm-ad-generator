@@ -9,10 +9,10 @@ export default function TopBar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
               width: 36, height: 36, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #5E6AD2, #9B6DFF)',
+              background: 'linear-gradient(135deg, #0F6E56, #16A87F)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 700, fontSize: 16, color: '#fff', flexShrink: 0,
-              boxShadow: '0 0 12px rgba(94,106,210,0.4)'
+              boxShadow: '0 0 12px rgba(15,110,86,0.4)'
             }}>O</div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>SMB Sales Toolkit</div>
