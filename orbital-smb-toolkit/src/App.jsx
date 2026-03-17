@@ -187,30 +187,30 @@ export default function App() {
           </div>
         </div>
 
-        {/* Tab Content */}
+        {/* Tab Content — all tabs stay mounted to preserve state during generation */}
         <div style={{ minHeight: 400 }}>
-          {activeTab === 'email' && (
+          <div style={{ display: activeTab === 'email' ? 'block' : 'none' }}>
             <ColdEmailTab config={configWithContext} onMissingKey={handleMissingKey} />
-          )}
-          {activeTab === 'call' && (
+          </div>
+          <div style={{ display: activeTab === 'call' ? 'block' : 'none' }}>
             <ColdCallTab config={configWithContext} onMissingKey={handleMissingKey} />
-          )}
-          {activeTab === 'objection' && (
+          </div>
+          <div style={{ display: activeTab === 'objection' ? 'block' : 'none' }}>
             <ObjectionTab config={configWithContext} onMissingKey={handleMissingKey} />
-          )}
-          {activeTab === 'research' && (
+          </div>
+          <div style={{ display: activeTab === 'research' ? 'block' : 'none' }}>
             <ResearchTab config={configWithContext} onMissingKey={handleMissingKey} />
-          )}
-          {activeTab === 'battlecard' && (
+          </div>
+          <div style={{ display: activeTab === 'battlecard' ? 'block' : 'none' }}>
             <BattlecardTab config={configWithContext} onMissingKey={handleMissingKey} />
-          )}
-          {activeTab === 'competitive' && (
+          </div>
+          <div style={{ display: activeTab === 'competitive' ? 'block' : 'none' }}>
             <CompetitiveIntelTab
               config={configWithContext}
               onMissingKey={handleMissingKey}
               onOutputGenerated={text => setGeneratedOutputs(prev => ({ ...prev, competitive: text }))}
             />
-          )}
+          </div>
         </div>
 
         {/* Download Complete Sales Play */}
